@@ -1,0 +1,21 @@
+[project]
+name = "omnom-ci-bot"
+version = "0.1.0"
+description = "A Telegram bot that manages and translates release notes for software projects. It integrates with DeepL for automatic translation and supports user input for final approval and modifications."
+authors = [
+    {name = "Dmitriy Baranov",email = "baranovda89@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+ruff = "^0.9.6"

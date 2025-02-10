@@ -1,0 +1,66 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+*.so
+*.dylib
+*.egg-info
+dist
+build
+.eggs
+.env
+.venv
+*.env
+*.venv/
+
+# FastAPI
+*.sqlite
+*.db
+*.log
+
+# AIogram / Telegram Bot
+*.telegram
+*.json
+
+# Uvicorn
+*.pid
+*.sock
+
+# Docker (если используется)
+docker-compose.override.yml
+*.env
+*.log
+Dockerfile
+
+# IDEs
+.vscode/  # Игнорируем папку VSCode
+.idea/    # Для JetBrains
+*.iml
+*.swp
+
+# Pytest
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.hypothesis/
+*.tox
+
+# Environment variables
+.env
+
+# Virtualenv
+.venv/
+env/
+venv/
+
+# DeepL API keys (конфиденциальная информация)
+*.env
+config.json
+
+# Miscellaneous
+*.bak
+*.tmp
+*.swp
+
