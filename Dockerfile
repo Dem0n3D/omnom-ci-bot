@@ -1,19 +1,21 @@
 FROM python:3.9-alpine AS bot
 
-
-ENV PATH="${HOME}/.local/bin:${PATH}"
-
-WORKDIR /app
-
 RUN apk add --update --no-cache pipx
-RUN pipx install poetry
-
-RUN pip install poetry && poetry install --no-dev
-
-EXPOSE 8000
 
 RUN adduser -D bot
 USER bot
+
+RUN pipx install poetry
+
+ENV PATH="/home/bot/.local/bin:${PATH}"
+
+WORKDIR /app
+
+COPY pyproject.toml poetry.lock /app/
+
+RUN poetry install --only=main
+
+EXPOSE 8000
 
 COPY . /app
 
