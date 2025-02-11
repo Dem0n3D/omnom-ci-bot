@@ -31,7 +31,6 @@ build
 docker-compose.override.yml
 *.env
 *.log
-Dockerfile
 
 # IDEs
 .vscode/  # Игнорируем папку VSCode

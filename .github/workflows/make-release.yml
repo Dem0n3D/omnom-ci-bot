@@ -1,0 +1,26 @@
+name: Semantic release
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  release:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Tag new version
+        run: npx semantic-release@v22.0.12
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
