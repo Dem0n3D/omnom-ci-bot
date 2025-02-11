@@ -78,7 +78,7 @@ class Notes(BaseModel):
 @app.post("/release_notes")
 async def release_notes(data: Notes):
     try:
-        translated_notes = translate_text(data.text, target_language=data.target_language)
+        translated_notes = translate_text(data.notes, target_language=data.target_language)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error in translation: {str(e)}")
     
@@ -93,7 +93,7 @@ async def release_notes(data: Notes):
     # Send message to Telegram
     sent_message = await bot.send_message(
         chat_id=chat_id,
-        text=f"Новые release notes для перевода:\n\n<pre>{notes}</pre>\n\n"
+        text=f"Новые release notes для перевода:\n\n<pre>{data.notes}</pre>\n\n"
             f"Переведенные release notes:\n\n<pre>{translated_notes}</pre>\n\n"
             "Пожалуйста, отправьте отредактированную версию, используя функцию 'Ответить' на это сообщение.",
         parse_mode=ParseMode.HTML,
