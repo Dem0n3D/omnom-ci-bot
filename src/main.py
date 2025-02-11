@@ -70,7 +70,7 @@ def translate_text(text: str, target_language="en"):
 
 
 class Notes(BaseModel):
-    text: str
+    notes: str
     chat_id: int = None
     target_language: str
 
@@ -107,7 +107,7 @@ async def release_notes(data: Notes):
         translated_notes = await asyncio.wait_for(
             task, timeout=int(os.getenv("TRANSLATION_TIMEOUT", 600))
         )  # Timeout 10 minutes
-        return {"text": translated_notes}
+        return {"translated_notes": translated_notes}
     except asyncio.TimeoutError as e:
         # If user did not respond within the timeout
         pending_tasks.pop(chat_id, None)  # Remove task if not completed
