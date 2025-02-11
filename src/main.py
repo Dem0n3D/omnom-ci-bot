@@ -71,20 +71,19 @@ def translate_text(text: str, target_language="en"):
 
 class Notes(BaseModel):
     text: str
+    chat_id: int = None
+    target_language: str
 
 # --- FastAPI Route ---
 @app.post("/release_notes")
-async def release_notes(request: Request):
-    notes = await request.body()
-    notes = notes.decode("utf-8")
-
+async def release_notes(data: Notes):
     try:
-        translated_notes = translate_text(notes, target_language="ru")
+        translated_notes = translate_text(data.text, target_language=data.target_language)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error in translation: {str(e)}")
     
     # Send message to Telegram and wait for response
-    chat_id = int(TELEGRAM_CHAT_ID)
+    chat_id = data.chat_id or int(TELEGRAM_CHAT_ID)
 
     # Create asyncio.Future to wait for response
     loop = asyncio.get_event_loop()
@@ -108,7 +107,7 @@ async def release_notes(request: Request):
         translated_notes = await asyncio.wait_for(
             task, timeout=int(os.getenv("TRANSLATION_TIMEOUT", 600))
         )  # Timeout 10 minutes
-        return translated_notes
+        return {"text": translated_notes}
     except asyncio.TimeoutError as e:
         # If user did not respond within the timeout
         pending_tasks.pop(chat_id, None)  # Remove task if not completed
