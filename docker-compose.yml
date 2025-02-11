@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  telegram-bot:
+    build: .
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - DEEPL_API_KEY=${DEEPL_API_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    restart: always
