@@ -21,7 +21,6 @@ build
 
 # AIogram / Telegram Bot
 *.telegram
-*.json
 
 # Uvicorn
 *.pid
