@@ -6,8 +6,9 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
+import requests
 
 load_dotenv(verbose=True, dotenv_path=".env.local")
 load_dotenv(verbose=True, dotenv_path=".env")
@@ -15,6 +16,8 @@ load_dotenv(verbose=True, dotenv_path=".env")
 # Settings
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
+
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
 
@@ -51,12 +54,35 @@ async def handle_user_message(message: types.Message):
         await message.reply("No active translation request. Try again later.")
 
 
+def translate_text(text: str, target_language="en"):
+    url = "https://api-free.deepl.com/v2/translate"
+    params = {
+        "auth_key": DEEPL_API_KEY,
+        "text": text,
+        "target_lang": target_language.upper(),
+    }
+    response = requests.post(url, data=params)
+    
+    if response.status_code == 200:
+        return response.json()["translations"][0]["text"]
+    else:
+        raise Exception(f"Error in translation: {response.text}")
+
+
 class Notes(BaseModel):
     text: str
 
 # --- FastAPI Route ---
 @app.post("/release_notes")
-async def release_notes(notes: Notes):
+async def release_notes(request: Request):
+    notes = await request.body()
+    notes = notes.decode("utf-8")
+
+    try:
+        translated_notes = translate_text(notes, target_language="ru")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in translation: {str(e)}")
+    
     # Send message to Telegram and wait for response
     chat_id = int(TELEGRAM_CHAT_ID)
 
@@ -68,8 +94,9 @@ async def release_notes(notes: Notes):
     # Send message to Telegram
     sent_message = await bot.send_message(
         chat_id=chat_id,
-        text=f"New release notes for translation:\n\n{notes.text}\n\n"
-        "Please send the edited version using the 'Reply' function on this message.",
+        text=f"Новые release notes для перевода:\n\n<pre>{notes}</pre>\n\n"
+            f"Переведенные release notes:\n\n<pre>{translated_notes}</pre>\n\n"
+            "Пожалуйста, отправьте отредактированную версию, используя функцию 'Ответить' на это сообщение.",
         parse_mode=ParseMode.HTML,
     )
 
