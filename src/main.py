@@ -7,6 +7,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramBadRequest
+from aiogram.types import BufferedInputFile
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
@@ -111,15 +112,13 @@ async def release_notes(data: Notes):
         )
     except TelegramBadRequest as e:
         if "message is too long" in str(e):
-            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                tmp_file.write(text.encode("utf-8"))
-                tmp_file.flush()
-                tmp_file.seek(0)
-                sent_message = await bot.send_document(
-                    chat_id=chat_id,
-                    document=tmp_file.name,
-                    caption="Release notes for translation",
-                )
+            sent_message = await bot.send_document(
+                chat_id=chat_id,
+                document=BufferedInputFile(
+                    text.encode("utf-8"), filename="release_notes.txt"
+                ),
+                caption="Release notes for translation",
+            )
         else:
             raise e
 
