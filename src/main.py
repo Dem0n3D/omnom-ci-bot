@@ -1,10 +1,12 @@
 import asyncio
+from io import BytesIO
 import logging
 import os
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramBadRequest
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
@@ -90,14 +92,30 @@ async def release_notes(data: Notes):
     task = loop.create_future()
     pending_tasks[chat_id] = task
 
-    # Send message to Telegram
-    sent_message = await bot.send_message(
-        chat_id=chat_id,
-        text=f"Новые release notes для перевода:\n\n<pre>{data.notes}</pre>\n\n"
-            f"Переведенные release notes:\n\n<pre>{translated_notes}</pre>\n\n"
-            "Пожалуйста, отправьте отредактированную версию, используя функцию 'Ответить' на это сообщение.",
-        parse_mode=ParseMode.HTML,
-    )
+    try:
+        # Send message to Telegram
+        sent_message = await bot.send_message(
+            chat_id=chat_id,
+            text=f"New release notes for translation:\n\n<pre>{data.notes}</pre>\n\n"
+                f"Translated release notes:\n\n<pre>{translated_notes}</pre>\n\n"
+                "Please send the edited version using the 'Reply' function on this message.",
+            parse_mode=ParseMode.HTML,
+        )
+    except TelegramBadRequest as e:
+        if "message is too long" in str(e):
+            # If message is too long, send it as a file
+            file_content = (f"New release notes for translation:\n\n{data.notes}\n\n"
+                            f"Translated release notes:\n\n{translated_notes}\n\n"
+                            "Please send the edited version using the 'Reply' function on this message.")
+            file = BytesIO(file_content.encode('utf-8'))
+            file.name = "release_notes.txt"
+            sent_message = await bot.send_document(
+                chat_id=chat_id,
+                document=file,
+                caption="Release notes for translation",
+            )
+        else:
+            raise e
 
     # Save bot message ID
     pending_messages[chat_id] = sent_message.message_id
