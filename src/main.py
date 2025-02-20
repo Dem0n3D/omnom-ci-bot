@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import requests
+import tempfile
 
 load_dotenv(verbose=True, dotenv_path=".env.local")
 load_dotenv(verbose=True, dotenv_path=".env")
@@ -64,7 +65,7 @@ def translate_text(text: str, target_language="en"):
         "target_lang": target_language.upper(),
     }
     response = requests.post(url, data=params)
-    
+
     if response.status_code == 200:
         return response.json()["translations"][0]["text"]
     else:
@@ -76,14 +77,17 @@ class Notes(BaseModel):
     chat_id: int = None
     target_language: str
 
+
 # --- FastAPI Route ---
 @app.post("/release_notes")
 async def release_notes(data: Notes):
     try:
-        translated_notes = translate_text(data.notes, target_language=data.target_language)
+        translated_notes = translate_text(
+            data.notes, target_language=data.target_language
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error in translation: {str(e)}")
-    
+
     # Send message to Telegram and wait for response
     chat_id = data.chat_id or int(TELEGRAM_CHAT_ID)
 
@@ -92,28 +96,30 @@ async def release_notes(data: Notes):
     task = loop.create_future()
     pending_tasks[chat_id] = task
 
+    text = (
+        f"New release notes for translation:\n\n<pre>{data.notes}</pre>\n\n"
+        f"Translated release notes:\n\n<pre>{translated_notes}</pre>\n\n"
+        f"Please send the edited version using the 'Reply' function on this message."
+    )
+
     try:
         # Send message to Telegram
         sent_message = await bot.send_message(
             chat_id=chat_id,
-            text=f"New release notes for translation:\n\n<pre>{data.notes}</pre>\n\n"
-                f"Translated release notes:\n\n<pre>{translated_notes}</pre>\n\n"
-                "Please send the edited version using the 'Reply' function on this message.",
+            text=text,
             parse_mode=ParseMode.HTML,
         )
     except TelegramBadRequest as e:
         if "message is too long" in str(e):
-            # If message is too long, send it as a file
-            file_content = (f"New release notes for translation:\n\n{data.notes}\n\n"
-                            f"Translated release notes:\n\n{translated_notes}\n\n"
-                            "Please send the edited version using the 'Reply' function on this message.")
-            file = BytesIO(file_content.encode('utf-8'))
-            file.name = "release_notes.txt"
-            sent_message = await bot.send_document(
-                chat_id=chat_id,
-                document=file,
-                caption="Release notes for translation",
-            )
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                tmp_file.write(text)
+                tmp_file.flush()
+                tmp_file.seek(0)
+                sent_message = await bot.send_document(
+                    chat_id=chat_id,
+                    document=tmp_file.name,
+                    caption="Release notes for translation",
+                )
         else:
             raise e
 
