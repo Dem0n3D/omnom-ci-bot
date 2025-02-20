@@ -112,7 +112,7 @@ async def release_notes(data: Notes):
     except TelegramBadRequest as e:
         if "message is too long" in str(e):
             with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-                tmp_file.write(text)
+                tmp_file.write(text.encode("utf-8"))
                 tmp_file.flush()
                 tmp_file.seek(0)
                 sent_message = await bot.send_document(
