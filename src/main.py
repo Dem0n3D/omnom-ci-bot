@@ -82,12 +82,12 @@ class Notes(BaseModel):
 # --- FastAPI Route ---
 @app.post("/release_notes")
 async def release_notes(data: Notes):
-    try:
-        translated_notes = translate_text(
-            data.notes, target_language=data.target_language
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error in translation: {str(e)}")
+    # try:
+    #     translated_notes = translate_text(
+    #         data.notes, target_language=data.target_language
+    #     )
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=f"Error in translation: {str(e)}")
 
     # Send message to Telegram and wait for response
     chat_id = data.chat_id or int(TELEGRAM_CHAT_ID)
@@ -99,7 +99,7 @@ async def release_notes(data: Notes):
 
     text = (
         f"New release notes for translation:\n\n<pre>{data.notes}</pre>\n\n"
-        f"Translated release notes:\n\n<pre>{translated_notes}</pre>\n\n"
+        # f"Translated release notes:\n\n<pre>{translated_notes}</pre>\n\n"
         f"Please send the edited version using the 'Reply' function on this message."
     )
 
